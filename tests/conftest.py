@@ -3,13 +3,13 @@ import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.pool import StaticPool
-from app.main import app
-from app.database import Base, get_db
-from app.config import settings
+from ..app import main,database,config
+from main import app
+from database import Base, get_db
+from config import settings
 from unittest.mock import AsyncMock, patch
 from contextlib import ExitStack
 
-# In-memory SQLite for testing
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 engine = create_async_engine(
