@@ -13,8 +13,9 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Pytest
-        run: pip install pytest
+      - name: Install dependencies
+        run: |
+          pip install pytest pytest-asyncio fastapi httpx sqlalchemy alembic psycopg2-binary
 
       - name: Run Tests
         run: pytest
