@@ -7,6 +7,7 @@ from app.main import app
 from app.database import Base, get_db
 from app.config import settings
 from unittest.mock import AsyncMock, patch
+from contextlib import ExitStack
 
 # In-memory SQLite for testing
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -26,10 +27,10 @@ TestingSessionLocal = async_sessionmaker(
 async def db_session():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     async with TestingSessionLocal() as session:
         yield session
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
@@ -48,9 +49,16 @@ async def client(db_session):
 
 
 @pytest_asyncio.fixture(autouse=True)
-def mock_redis():
-    with patch("app.main.redis_client", new_callable=AsyncMock) as mock_main_redis, \
-         patch("app.router.portfolio.redis_client", new_callable=AsyncMock) as mock_portfolio_redis:
+async def mock_redis():
+    with ExitStack() as stack:
+        mock_main_redis = stack.enter_context(
+            patch("app.main.redis_client", new_callable=AsyncMock)
+        )
+        mock_portfolio_redis = stack.enter_context(
+            patch("app.router.portfolio.redis_client", new_callable=AsyncMock)
+        )
+
         mock_main_redis.ping.return_value = True
         mock_portfolio_redis.mget.return_value = []
+
         yield mock_main_redis
