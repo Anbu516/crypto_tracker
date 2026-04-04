@@ -1,5 +1,6 @@
 from inspect import indentsize
 from typing import Annotated
+from sqlalchemy.sql import func
 from sqlalchemy import String, ForeignKey, true
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import (
@@ -58,5 +59,8 @@ class Portfolio(Base):
     coin_id: Mapped[str] = mapped_column(String(50), nullable=False)
     symbol: Mapped[str] = mapped_column(String(10), nullable=False)
     quantity: Mapped[float] = mapped_column(nullable=False, default=0.0)
-
+    buy_price: Mapped[float] = mapped_column(nullable=False, default=0.0)
+    updated_at: Mapped[datetime] = mapped_column(
+        default=func.now(), onupdate=func.now()
+    )
     owner: Mapped["Users"] = relationship("Users", back_populates="portfolio_items")

@@ -121,5 +121,20 @@ class MarketService:
             except Exception:
                 return False
 
+    async def get_historical_prices(self, coin_id: str, days: int = 14):
+        url = f"{self.BASE_URL}/coins/{coin_id}/market_chart?vs_currency=usd&days={days}&interval=daily"
+        headers = {"x-cg-demo-api-key": self.API_KEY}
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                return [entry[1] for entry in data["prices"]]
+
+            except Exception as e:
+                logger.error(f"Failed to fetch historical data: {e}")
+                return []
+
 
 market_service1 = MarketService()

@@ -27,9 +27,15 @@ async def add_coin_to_portfolio(
     existing_item = result.scalars().first()
 
     if existing_item:
-        existing_item.quantity += coin_data.quantity
+        old_total_cost = existing_item.quantity * existing_item.buy_price
+        new_purchase_cost = coin_data.quantity * coin_data.buy_price
+
+        new_quantity = existing_item.quantity + coin_data.quantity
+        new_avg_price = (old_total_cost + new_purchase_cost) / new_quantity
+
+        existing_item.quantity = new_quantity
+        existing_item.buy_price = new_avg_price
         await session.commit()
-        await session.refresh(existing_item)
         return existing_item
 
     new_item = Portfolio(**coin_data.model_dump(), user_id=user_id)
