@@ -2,10 +2,11 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from ..database import session_object, Users, Portfolio
 from ..oauth2 import get_current_user
 from ..models import PortfolioCreate, PortfolioResponse
-from ..crypto_service import portfolio_service, market_service
+from ..crypto_service import portfolio_service
 from sqlalchemy import select
 from ..redis_config import redis_client
 import random
+from ..crypto_service.market_service import market_service1
 
 router = APIRouter(prefix="/api/v1/portfolio", tags=["Portfolio"])
 
@@ -46,7 +47,6 @@ async def total_value(
     cached_values = await redis_client.mget(*cache_keys)
     live_prices = {cid: float(val) for cid, val in zip(coin_ids, cached_values) if val}
 
-    market_service1 = market_service.MarketService()
     missing_ids = [cid for cid in coin_ids if cid not in live_prices]
 
     if missing_ids:
