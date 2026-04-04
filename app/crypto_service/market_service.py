@@ -1,3 +1,4 @@
+from re import M
 import httpx
 import logging
 import json
@@ -94,7 +95,16 @@ class MarketService:
                 return {}
 
     async def validate_coin_id(self, coin_id: str) -> bool:
+        cache_key = f"valid_id:{coin_id.lower()}"
 
+        # 1. Check Redis Cache
+        from ..redis_config import redis_client
+
+        cached_status = await redis_client.get(cache_key)
+        if cached_status:
+            return cached_status == "true"
+
+        # 2. If not in cache, hit API
         url = f"{self.BASE_URL}/simple/price?ids={coin_id}&vs_currencies=usd"
         headers = {"x-cg-demo-api-key": self.API_KEY}
 
@@ -102,6 +112,14 @@ class MarketService:
             try:
                 response = await client.get(url, headers=headers)
                 data = response.json()
-                return coin_id.lower() in data
+                is_valid = coin_id.lower() in data
+
+                # 3. Store result in Redis for 24 hours (86400 seconds)
+                await redis_client.setex(cache_key, 86400, str(is_valid).lower())
+
+                return is_valid
             except Exception:
                 return False
+
+
+market_service1 = MarketService()
